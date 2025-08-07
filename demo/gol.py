@@ -5,9 +5,9 @@ import random
 import matplotlib.colors
 
 # Grid size
-GRID_SIZE_X = 64
+GRID_SIZE_X = 64 * 2
 GRID_SIZE_Y = 48
-CELL_SIZE = 10
+CELL_SIZE = 30
 
 RULE_BUTTON_WIDTH = CELL_SIZE * 4
 RULE_BUTTON_HEIGHT = CELL_SIZE * 4
@@ -27,16 +27,17 @@ GRID_COLOR = (50, 50, 50)
 TEXT_COLOR = (255, 255, 255)
 BUTTON_ON = (0, 180, 180)
 BUTTON_OFF = (60, 60, 60)
-FONT = '../../comic.ttf'
+FONT = '../../impact.ttf'
 # Rule state
 BIRTH = {3,4,6} #0178 #346        #2378  #34
 SURVIVE = {1,3,6,7,8} #067 #13678 #34568 #135679
+# 08 - 34678
 
 pygame.init()
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 pygame.display.set_caption("Game of Life with Rules")
 clock = pygame.time.Clock()
-font = pygame.font.SysFont("Arial", 16)
+font = pygame.font.SysFont("Arial", 14)
 
 # Initialize grid
 grid = np.zeros((GRID_SIZE_Y, GRID_SIZE_X), dtype=int)
@@ -60,7 +61,7 @@ COLOR_ARRAY = color_gradient((0,20,0), ALIVE_COLOR, 8) + color_gradient(ALIVE_CO
 #HEX_ARRAY = ['FBF8CC', 'FFF8DC', 'FFF0F5', 'FFE4E1', 'FFDAB9', 'FFC0CB', 'FFA07A', 'FF7F50', 'FF6347', 'FF4500', 'FF0000', 'DC143C', 'B22222', '8B0000', '800000', 'FFFFFF']
 #HEX_ARRAY = ['FBF8CC', 'FDE4CF', 'FFCFD2', 'F1C0E8', 'CFBAF0', 'A3C4F3', '90DBF4', '8EECF5', '98F5E1', 'B9FBC0', 'B9FFC0', 'B9FFDD', 'B9FFEE', 'B9FFFF', '800000', 'FFFFFF']
 #HEX_ARRAY = ['D9ED92', 'B5E48C','99D98C','76C893','52B69A','34A0A4','168AAD','1A759F','1E6091','184E77','0F4C75','023E8A','03045E','FFFFFF']
-HEX_ARRAY = ['03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
+HEX_ARRAY = ['FFBA08', '03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
 HEX_ARRAY.reverse()        
 COLOR_ARRAY = [hex_to_rgb(hex_color) for hex_color in HEX_ARRAY]
 print(COLOR_ARRAY)
