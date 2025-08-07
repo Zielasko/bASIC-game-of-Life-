@@ -2,6 +2,7 @@ import pygame
 import numpy as np
 from convert_char_to_pixels import char_to_pixels
 import random
+import matplotlib.colors
 
 # Grid size
 GRID_SIZE_X = 64
@@ -15,7 +16,7 @@ RULE_Y_OFFSET = GRID_SIZE_Y * CELL_SIZE + 20
 LAST_RULE = -1
 
 WINDOW_SIZE_X = GRID_SIZE_X * CELL_SIZE
-WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20  # room for two rule rows
+WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20
 
 # Colors
 DEAD_COLOR = (30, 30, 30)
@@ -26,12 +27,11 @@ GRID_COLOR = (50, 50, 50)
 TEXT_COLOR = (255, 255, 255)
 BUTTON_ON = (0, 180, 180)
 BUTTON_OFF = (60, 60, 60)
-
+FONT = '../../comic.ttf'
 # Rule state
-BIRTH = {3,4,6} #0178 #346
-SURVIVE = {1,3,6,7,8} #067 #13678
+BIRTH = {3,4,6} #0178 #346        #2378  #34
+SURVIVE = {1,3,6,7,8} #067 #13678 #34568 #135679
 
-# Initialize Pygame
 pygame.init()
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
 pygame.display.set_caption("Game of Life with Rules")
@@ -52,19 +52,30 @@ def color_gradient(start_color, end_color, steps):
         gradient.append((r, g, b))
     return gradient
 
+def hex_to_rgb(hex):
+  return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
+
 # Example: from DEAD_COLOR to ALIVE_COLOR to SPECIAL2_COLOR
-COLOR_ARRAY = color_gradient(DEAD_COLOR, ALIVE_COLOR, 8) + color_gradient(ALIVE_COLOR, SPECIAL2_COLOR, 7)[1:]
+COLOR_ARRAY = color_gradient((0,20,0), ALIVE_COLOR, 8) + color_gradient(ALIVE_COLOR, SPECIAL2_COLOR, 7)[1:]
+#HEX_ARRAY = ['FBF8CC', 'FFF8DC', 'FFF0F5', 'FFE4E1', 'FFDAB9', 'FFC0CB', 'FFA07A', 'FF7F50', 'FF6347', 'FF4500', 'FF0000', 'DC143C', 'B22222', '8B0000', '800000', 'FFFFFF']
+#HEX_ARRAY = ['FBF8CC', 'FDE4CF', 'FFCFD2', 'F1C0E8', 'CFBAF0', 'A3C4F3', '90DBF4', '8EECF5', '98F5E1', 'B9FBC0', 'B9FFC0', 'B9FFDD', 'B9FFEE', 'B9FFFF', '800000', 'FFFFFF']
+#HEX_ARRAY = ['D9ED92', 'B5E48C','99D98C','76C893','52B69A','34A0A4','168AAD','1A759F','1E6091','184E77','0F4C75','023E8A','03045E','FFFFFF']
+HEX_ARRAY = ['03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
+HEX_ARRAY.reverse()        
+COLOR_ARRAY = [hex_to_rgb(hex_color) for hex_color in HEX_ARRAY]
+print(COLOR_ARRAY)
 
 def draw_grid(surface, grid):
     surface.fill(DEAD_COLOR)
-    for y in range(GRID_SIZE_Y):
+    for y in range(GRID_SIZE_Y):    
         for x in range(GRID_SIZE_X):
             rect = pygame.Rect(x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE)
             val = grid[y][x]
             if val > 0 and val < len(COLOR_ARRAY):
-                pygame.draw.rect(surface, COLOR_ARRAY[val], rect)
+                pygame.draw.rect(surface, COLOR_ARRAY[val-1], rect)
             elif val >= len(COLOR_ARRAY):
                 pygame.draw.rect(surface, COLOR_ARRAY[-1], rect)
+                # print(f"Value {val} exceeds color array bounds.")
             pygame.draw.rect(surface, GRID_COLOR, rect, 1)
 
 def update_grid(grid):
@@ -85,7 +96,7 @@ def update_grid(grid):
                 new_grid[y][x] = 1 if neighbors in BIRTH else 0
     return new_grid
 
-def initialize_grid_with_text(text, grid_size_x=64, grid_size_y=48, font_path='comic.ttf', font_size=12):
+def initialize_grid_with_text(text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_path=FONT, font_size=12):
     pixel_array = char_to_pixels(text, path=font_path, fontsize=font_size)
     grid = np.zeros((grid_size_y, grid_size_x), dtype=int)
     h, w = pixel_array.shape
@@ -132,7 +143,7 @@ def randomize_rules():
     SURVIVE = set(random.sample(range(9), random.randint(0, 5)))
 
 # Load initial pattern
-grid = initialize_grid_with_text("HeiChips", grid_size_x=64, grid_size_y=48, font_path="comic.ttf", font_size=15)
+grid = initialize_grid_with_text("HeiChips", grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_path=FONT, font_size=15)
 
 # Main loop
 while True:
@@ -147,7 +158,7 @@ while True:
             elif event.key == pygame.K_c:
                 grid.fill(0)
             elif event.key == pygame.K_h:
-                grid = initialize_grid_with_text("HeiChips", grid_size_x=64, grid_size_y=48, font_path="comic.ttf", font_size=15)
+                grid = initialize_grid_with_text("HeiChips", grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_path=FONT, font_size=15)
             elif event.key == pygame.K_r:
                 randomize_rules()
 
@@ -157,7 +168,6 @@ while True:
             if y < GRID_SIZE_Y:
                 grid[y][x] = 1
             else:
-                # Rule clicks
                 if handle_rule_click((mx, my), birth_buttons, BIRTH): pass
                 if handle_rule_click((mx, my), survive_buttons, SURVIVE): pass
 

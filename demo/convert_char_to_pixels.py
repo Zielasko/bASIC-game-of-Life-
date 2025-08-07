@@ -3,7 +3,9 @@ import string
 from PIL import Image, ImageFont, ImageDraw, ImageFilter, ImageOps
 import numpy as np
 
-def char_to_pixels(text, path='comic.ttf', fontsize=14):
+FONT = "../../comic.ttf"
+
+def char_to_pixels(text, path=FONT, fontsize=14):
     """
     Based on https://stackoverflow.com/a/27753869/190597 (jsheperd)
     """
@@ -48,7 +50,7 @@ def convert_chars():
     for c in string.printable:
         arr = char_to_pixels(
             c, 
-            path='comic.ttf', 
+            path=FONT, 
             fontsize=24)
         display(arr, c)
         print()
@@ -57,7 +59,7 @@ def convert_string(text):
     for c in text:
         arr = char_to_pixels(
             c, 
-            path='comic.ttf', 
+            path=FONT, 
             fontsize=40)
         display_simple(arr, c)
         print()
