@@ -5,9 +5,9 @@ import random
 import matplotlib.colors
 
 # Grid size
-GRID_SIZE_X = 64 * 2
+GRID_SIZE_X = 64
 GRID_SIZE_Y = 48
-CELL_SIZE = 30
+CELL_SIZE = 20
 
 RULE_BUTTON_WIDTH = CELL_SIZE * 4
 RULE_BUTTON_HEIGHT = CELL_SIZE * 4
@@ -29,8 +29,8 @@ BUTTON_ON = (0, 180, 180)
 BUTTON_OFF = (60, 60, 60)
 FONT = '../../impact.ttf'
 # Rule state
-BIRTH = {3,4,6} #0178 #346        #2378  #34
-SURVIVE = {1,3,6,7,8} #067 #13678 #34568 #135679
+BIRTH = {0,8} #0178 #346        #2378  #34
+SURVIVE = {3,4,6,7,8} #067 #13678 #34568 #135679
 # 08 - 34678
 
 pygame.init()
