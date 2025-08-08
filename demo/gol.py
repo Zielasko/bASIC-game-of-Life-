@@ -31,7 +31,8 @@ FONT = '../../impact.ttf'
 # Rule state
 BIRTH = {0,8} #0178 #346        #2378  #34
 SURVIVE = {3,4,6,7,8} #067 #13678 #34568 #135679
-# 08 - 34678
+
+
 
 pygame.init()
 screen = pygame.display.set_mode((WINDOW_SIZE_X, WINDOW_SIZE_Y))
@@ -62,6 +63,26 @@ COLOR_ARRAY = color_gradient((0,20,0), ALIVE_COLOR, 8) + color_gradient(ALIVE_CO
 #HEX_ARRAY = ['FBF8CC', 'FDE4CF', 'FFCFD2', 'F1C0E8', 'CFBAF0', 'A3C4F3', '90DBF4', '8EECF5', '98F5E1', 'B9FBC0', 'B9FFC0', 'B9FFDD', 'B9FFEE', 'B9FFFF', '800000', 'FFFFFF']
 #HEX_ARRAY = ['D9ED92', 'B5E48C','99D98C','76C893','52B69A','34A0A4','168AAD','1A759F','1E6091','184E77','0F4C75','023E8A','03045E','FFFFFF']
 HEX_ARRAY = ['FFBA08', '03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
+
+# Rainbow gradient (red, orange, yellow, green, blue, indigo, violet)
+HEX_ARRAY = [
+    'FF0000', # Red
+    'FF4000', # Red-Orange
+    'FF8000', # Orange
+    'FFBF00', # Yellow-Orange
+    'FFFF00', # Yellow
+    'BFFF00', # Yellow-Green
+    '80FF00', # Green-Yellow
+    '40FF00', # Yellowish Green
+    '00FF00', # Green
+    '00FF80', # Green-Cyan
+    '00FFBF', # Cyan-Green
+    '00FFFF', # Cyan
+    '0080FF', # Blue-Cyan
+    '0000FF', # Blue
+    '4B0082', # Indigo
+    '8F00FF', # Violet
+]
 HEX_ARRAY.reverse()        
 COLOR_ARRAY = [hex_to_rgb(hex_color) for hex_color in HEX_ARRAY]
 print(COLOR_ARRAY)
@@ -99,6 +120,8 @@ def update_grid(grid):
 
 def initialize_grid_with_text(text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_path=FONT, font_size=12):
     pixel_array = char_to_pixels(text, path=font_path, fontsize=font_size)
+    # Change all nonzero pixels to 2
+    pixel_array = np.where(pixel_array != 0, 1, 0)
     grid = np.zeros((grid_size_y, grid_size_x), dtype=int)
     h, w = pixel_array.shape
     if h > grid_size_y or w > grid_size_x:
@@ -162,6 +185,22 @@ while True:
                 grid = initialize_grid_with_text("HeiChips", grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_path=FONT, font_size=15)
             elif event.key == pygame.K_r:
                 randomize_rules()
+            elif pygame.K_0 <= event.key <= pygame.K_9:
+                preset = event.key - pygame.K_0
+                RULE_PRESETS = [
+                    (set([3]), set([2, 3])),          # 0: Conway's Life B3/S23
+                    (set([0, 8]), set([3, 4, 6,7,8])),   # 1
+                    (set([3, 6]), set([2, 3])),      # 2: HighLife B36/S23
+                    (set([0, 7]), set([1,3,4])),   # 3
+                    (set([3, 7, 8]), set([2, 3, 4])),# 4
+                    (set([1, 2, 5]), set([3, 5, 6])),# 5
+                    (set([2, 4]), set([4, 5, 6])),   # 6
+                    (set([3, 6, 8]), set([2, 3, 4])),# 7
+                    (set([3, 4, 5]), set([2, 3, 4])),# 8
+                    (set([2, 3, 5]), set([3, 5, 6])),# 9
+                ]
+                if preset < len(RULE_PRESETS):
+                    BIRTH, SURVIVE = map(set, RULE_PRESETS[preset])
 
         elif pygame.mouse.get_pressed()[0]:
             mx, my = pygame.mouse.get_pos()
