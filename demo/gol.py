@@ -7,7 +7,7 @@ import matplotlib.colors
 # Grid size
 GRID_SIZE_X = 64
 GRID_SIZE_Y = 48
-CELL_SIZE = 20
+CELL_SIZE = 35
 
 RULE_BUTTON_WIDTH = CELL_SIZE * 4
 RULE_BUTTON_HEIGHT = CELL_SIZE * 4
