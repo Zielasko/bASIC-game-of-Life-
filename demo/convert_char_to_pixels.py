@@ -5,11 +5,30 @@ import numpy as np
 
 FONT = "../../comic.ttf"
 
-def char_to_pixels(text, path=FONT, fontsize=14):
+def char_to_pixels(text, path=FONT, fontsize=14, font_name=None, bold=False):
     """
     Based on https://stackoverflow.com/a/27753869/190597 (jsheperd)
     """
-    font = ImageFont.truetype(path, fontsize) 
+    try:
+        if font_name:
+            # Try to use system font
+            import pygame
+            pygame.font.init()
+            
+            # Get font path for system font
+            font_path = pygame.font.match_font(font_name, bold=bold)
+            if font_path:
+                font = ImageFont.truetype(font_path, fontsize)
+            else:
+                # Fallback to default font
+                font = ImageFont.load_default()
+        else:
+            # Use provided path
+            font = ImageFont.truetype(path, fontsize)
+    except (OSError, IOError):
+        # Fallback to default font if loading fails
+        font = ImageFont.load_default()
+    
     bbox = font.getbbox(text)
     w, h = bbox[2] - bbox[0], bbox[3] - bbox[1]
     h *= 3
