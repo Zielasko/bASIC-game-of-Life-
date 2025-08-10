@@ -4,6 +4,8 @@
 Bag O' Life - cellular life over HDMI  
 Includes a python simulator for cellular automatons to test rules, settings and color palettes for resource limited systems (ASICs/Embedded systems)
 
+The actual hardware description resides in [this](https://github.com/heliosfa/heichips25-template/tree/main) repository.  
+
 ![Preview](demo/images/preview.png)
 
 ## Controls & Hotkeys
