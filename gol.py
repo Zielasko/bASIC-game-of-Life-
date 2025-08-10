@@ -108,9 +108,15 @@ AGE_RULE_PRESETS = [
 
 BIRTH = {0,8} #0178 #346        #2378  #34
 SURVIVE = {3,4,6,7,8} #067 #13678 #34568 #135679
-BIRTH_AGE = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} # Age 0 does not exist - initialize with everything set to 1 (16 possible age values)
-SURVIVE_AGE = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} # max age is 15
+BIRTH_AGE = set() 
+SURVIVE_AGE = set() 
 BIRTH, SURVIVE = RULE_PRESETS[6]
+
+def update_age_sets():
+    """Update BIRTH_AGE and SURVIVE_AGE based on current AGE_LIMIT"""
+    global BIRTH_AGE, SURVIVE_AGE
+    BIRTH_AGE = set(range(1, AGE_LIMIT + 1))  # Age 0 does not exist
+    SURVIVE_AGE = set(range(1, AGE_LIMIT + 1))
 
 # Config menu state
 show_config = False
@@ -126,6 +132,7 @@ config_cell_size = CELL_SIZE
 config_fps = 10  # Frames per second for simulation
 config_flicker_reduction = True  # Whether to enable dead pixel flickering reduction for Birth 0 rules
 config_age_influence = False  # Whether to enable age-based influence on birth/survive rules
+config_age_resolution = 4  # Number of bits for age attribute
 input_active = None  # Track which input field is active
 input_text = ""
 show_font_popup = False
@@ -209,28 +216,28 @@ COLOR_PALETTES = {
         ]
     },
     1: {
-        "name": "Warm",
-        "colors": ['FBF8CC', 'FFF8DC', 'FFF0F5', 'FFE4E1', 'FFDAB9', 'FFC0CB', 'FFA07A', 'FF7F50', 'FF6347', 'FF4500', 'FF0000', 'DC143C', 'B22222', '8B0000', '800000', 'FFFFFF']
+        "name": "Game Boy",
+        "colors": ['9BBC0F', '332c50', '332c50', '8BAC0F', '306230', '0F380F', '0F380F', '2D5A2D', '4F7F4F', '8BAC0F', '9BBC0F', 'ADCFAD', 'e0dbcd', 'a89f94', '706b66', '2b2b26']
     },
     2: {
+        "name": "Fire",
+        "colors": ['FFBA08', '03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
+    },
+    3: {
+        "name": "turquoise",
+        "colors": ['D9ED92', 'B5E48C', '99D98C', '76C893', '52B69A', '34A0A4', '168AAD', '1A759F', '1E6091', '184E77', '0F4C75', '023E8A', '03045E', '001D3D', '000814', '30FFFF']
+    },
+    6: {
         "name": "Pastel",
         "colors": ['FBF8CC', 'FDE4CF', 'FFCFD2', 'F1C0E8', 'CFBAF0', 'A3C4F3', '90DBF4', '8EECF5', '98F5E1', 'B9FBC0', 'B9FFC0', 'B9FFDD', 'B9FFEE', 'B9FFFF', '800000', 'FFFFFF']
     },
-    3: {
+    4: {
         "name": "Green-Blue",
         "colors": ['D9ED92', 'B5E48C','99D98C','76C893','52B69A','34A0A4','168AAD','1A759F','1E6091','184E77','0F4C75','023E8A','03045E','FFFFFF']
-    },
-    4: {
-        "name": "Fire",
-        "colors": ['FFBA08', '03073E', '370617', '6A040F', '9D0208', 'D00000', 'DC2F02', 'E85D04', 'F48C06', 'FAA307', 'FFBA08']
     },
     5: {
         "name": "Gradient",
         "colors": None  # Will use color_gradient function
-    },
-    6: {
-        "name": "turquoise",
-        "colors": ['D9ED92', 'B5E48C', '99D98C', '76C893', '52B69A', '34A0A4', '168AAD', '1A759F', '1E6091', '184E77', '0F4C75', '023E8A', '03045E', '001D3D', '000814', '30FFFF']
     },
     7: {
         "name": "Purple", 
@@ -245,23 +252,37 @@ COLOR_PALETTES = {
         "colors": ['03045E', '023E8A', '0077B6', '0096C7', '00B4D8', '48CAE4', '90E0EF', 'ADE8F4', 'CAF0F8', 'E0F4FF', '87CEEB', '5F9EA0', '4682B4', '1E90FF', '0000CD', 'DDFFFF']
     },
     10: {
-        "name": "Game Boy",
-        "colors": ['9BBC0F', '332c50', '332c50', '8BAC0F', '306230', '0F380F', '0F380F', '2D5A2D', '4F7F4F', '8BAC0F', '9BBC0F', 'ADCFAD', 'e0dbcd', 'a89f94', '706b66', '2b2b26']
-    }
+        "name": "Warm",
+        "colors": ['FBF8CC', 'FFF8DC', 'FFF0F5', 'FFE4E1', 'FFDAB9', 'FFC0CB', 'FFA07A', 'FF7F50', 'FF6347', 'FF4500', 'FF0000', 'DC143C', 'B22222', '8B0000', '800000', 'FFFFFF']
+    },
 }
 
 def update_color_array(log=True):
-    """Update COLOR_ARRAY based on selected palette"""
-    global COLOR_ARRAY, DEAD_COLOR
+    """Update COLOR_ARRAY based on selected palette and age resolution"""
+    global COLOR_ARRAY, DEAD_COLOR, AGE_LIMIT
+    
+    # Update AGE_LIMIT based on age resolution
+    AGE_LIMIT = (2 ** config_age_resolution) - 1
+    
+    update_age_sets()
+    
     palette = COLOR_PALETTES[config_palette]
     
     if palette["colors"] is None:  # Gradient palette
         COLOR_ARRAY = color_gradient((0,20,0), ALIVE_COLOR, 8) + color_gradient(ALIVE_COLOR, SPECIAL2_COLOR, 7)[1:]
+        if AGE_LIMIT > 15:
+            COLOR_ARRAY = color_gradient((0,20,0), ALIVE_COLOR, AGE_LIMIT//2) + color_gradient(ALIVE_COLOR, SPECIAL2_COLOR, AGE_LIMIT//2 + 1)[1:]
     else:
         hex_colors = palette["colors"].copy()
         if config_palette_reverse:
             hex_colors.reverse()
-        COLOR_ARRAY = [hex_to_rgb(hex_color) for hex_color in hex_colors]
+        base_colors = [hex_to_rgb(hex_color) for hex_color in hex_colors]
+        
+        # interpolate colors if AGE_LIMIT exceeds hardcoded palette
+        if config_age_influence != 4 and AGE_LIMIT > len(base_colors) - 1:
+            COLOR_ARRAY = interpolate_colors(base_colors, AGE_LIMIT)
+        else:
+            COLOR_ARRAY = base_colors
         
         # If Birth 0 is active and flicker reduction is enabled, set dead color to reduced first color
         # This should reduce flickering when cells toggle each frame
@@ -284,6 +305,43 @@ def update_color_array(log=True):
             print()
         else:
             DEAD_COLOR = (30, 30, 30)
+
+def interpolate_colors(base_colors, target_count):
+    """Interpolate colors to create a palette with target_count colors"""
+    print("number of colors in palette do not match AGE_LIMIT -> interpolating colors")
+    if target_count <= len(base_colors):
+        return base_colors[:target_count]
+    
+    result = []
+    # Calculate how many interpolated colors we need between each pair
+    segments = len(base_colors) - 1
+    colors_per_segment = target_count // segments
+    remaining = target_count % segments
+    
+    for i in range(segments):
+        start_color = base_colors[i]
+        end_color = base_colors[i + 1]
+        
+        # Add extra color to some segments if we have remainder
+        segment_colors = colors_per_segment + (1 if i < remaining else 0)
+        
+        # Generate interpolated colors for this segment
+        for j in range(segment_colors):
+            if j == 0:
+                result.append(start_color)
+            else:
+                # Interpolate between start and end
+                ratio = j / segment_colors
+                r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
+                g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
+                b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
+                result.append((r, g, b))
+    
+    # Add the final color
+    if len(result) < target_count:
+        result.append(base_colors[-1])
+    
+    return result[:target_count]
 
 # Initialize with default palette
 update_color_array()
@@ -816,6 +874,7 @@ def draw_config_menu(surface):
         ("Reverse Palette:", "Yes" if config_palette_reverse else "No", "palette_reverse"),
         ("Flicker Reduction:", "Yes" if config_flicker_reduction else "No", "flicker_reduction"),
         ("Age Influence:", "Yes" if config_age_influence else "No", "age_influence"),
+        ("Age Resolution:", str(config_age_resolution), "age_resolution"),
         ("Grid Width:", str(config_grid_x), "grid_x"),
         ("Grid Height:", str(config_grid_y), "grid_y"),
         ("Cell Size:", str(config_cell_size), "cell_size"),
@@ -996,7 +1055,7 @@ def handle_config_click(mouse_pos, buttons):
     global config_font_name, config_font_size, config_grid_x, config_grid_y, config_cell_size
     global GRID_SIZE_X, GRID_SIZE_Y, CELL_SIZE, grid
     global config_font_bold, config_text, config_palette, config_palette_reverse, config_fps, config_flicker_reduction
-    global config_age_influence, BIRTH_AGE, SURVIVE_AGE
+    global config_age_influence, config_age_resolution, BIRTH_AGE, SURVIVE_AGE
     
     # Check click delay to prevent rapid clicking
     if not can_click():
@@ -1089,6 +1148,8 @@ def handle_config_click(mouse_pos, buttons):
                     input_text = str(config_cell_size)
                 elif field_id == "fps":
                     input_text = str(config_fps)
+                elif field_id == "age_resolution":
+                    input_text = str(config_age_resolution)
                 elif field_id == "text":
                     input_text = config_text
                 return True
@@ -1126,7 +1187,7 @@ def handle_font_popup_click(mouse_pos, font_buttons, close_rect, scroll_up_rect,
 
 def handle_config_input(event):
     global input_active, input_text, show_font_popup
-    global config_font_name, config_font_size, config_grid_x, config_grid_y, config_cell_size, config_text, config_fps
+    global config_font_name, config_font_size, config_grid_x, config_grid_y, config_cell_size, config_text, config_fps, config_age_resolution
     global BIRTH_AGE, SURVIVE_AGE
     
     if input_active is None:
@@ -1146,6 +1207,8 @@ def handle_config_input(event):
                     config_cell_size = max(5, min(50, int(input_text)))
                 elif input_active == "fps":
                     config_fps = max(1, min(1000, int(input_text)))  # Limit FPS between 1-1000
+                elif input_active == "age_resolution":
+                    config_age_resolution = max(1, min(20, int(input_text)))  # Limit to 1-8 bits (2-256 values)
                 elif input_active == "text":
                     config_text = input_text if input_text.strip() else "HeiChips"
             except ValueError:
