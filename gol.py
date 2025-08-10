@@ -1237,6 +1237,9 @@ def handle_config_input(event):
 grid = initialize_grid_with_text(config_text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, 
                                 font_size=config_font_size, font_name=config_font_name, bold=config_font_bold)
 
+# Frame counter for simulation timing (run simulation every 4th frame)
+frame_counter = 0
+
 #TODO # Set initial window size
 update_window_size()
 
@@ -1298,7 +1301,12 @@ while True:
         mouse_pos = pygame.mouse.get_pos()
 
     if running and not show_config and not show_font_popup:
-        grid = update_grid(grid)
+        # Only update simulation every 4th frame
+        if frame_counter % 4 == 0:
+            grid = update_grid(grid)
+    
+    # Increment frame counter
+    frame_counter += 1
 
     draw_grid(screen, grid)
     
@@ -1393,4 +1401,4 @@ while True:
                 grid[y][x] = 0
     
     pygame.display.flip()
-    clock.tick(config_fps)
+    clock.tick(config_fps * 4)  # Run display at 4x config_fps, simulation runs every 4th frame
