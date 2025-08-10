@@ -33,6 +33,7 @@ RULE_BUTTON_HEIGHT = CELL_SIZE * 4
 RULE_TEXT_SIZE = CELL_SIZE * 2
 RULE_MARGIN = 2
 RULE_Y_OFFSET = GRID_SIZE_Y * CELL_SIZE + 20
+AGE_LIMIT = 15
 LAST_RULE = -1
 
 WINDOW_SIZE_X = GRID_SIZE_X * CELL_SIZE
@@ -64,9 +65,51 @@ RULE_PRESETS = [
     (set([3, 4, 5]), set([2, 3, 4])),# 8
     (set([1,2,4,8]), set([0,1,3,8])),# 9
 ]
+#B2467 S45678
+AGE_RULE_PRESETS = [
+    # 0:
+    (set([3]), set([2, 3]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15])),
+    
+    # 1:
+    (set([0, 8]), set([3, 4, 6, 7, 8]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15])),
+    
+    # 2:
+    (set([3, 6]), set([2, 3]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15])),
+    
+    # 3:
+    (set([0, 7]), set([1, 3, 4]), set([1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
+    
+    # 4:
+    (set([0]), set([1, 3, 5, 7]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
+    
+    # 5:
+    (set([1, 2, 5]), set([3, 5, 6]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15])),
+    
+    # 6:
+    (set([2, 4]), set([4, 5, 6]), set([1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
+    
+    # 7:
+    (set([0, 5, 6]), set([1, 9]), set([1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
+    
+    # 8: gameboy shrinking window
+    (set([0,1,2,3,7,8]), set([0,1,2,3,4,5,6]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])),
+    
+    # 9:Droplets preset
+    (set([1]), set([1,3,8]), set([1, 4, 6, 7, 8, 9, 11, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 11, 12, 14])),
+]
+
+#Droplets
+#Randomized rules: BIRTH=[1], SURVIVE=[1, 3, 8]
+#Randomized age rules: BIRTH_AGE=[1, 4, 6, 7, 8, 9, 11, 13, 14, 15], SURVIVE_AGE=[2, 3, 4, 5, 6, 7, 8, 11, 12, 14]
+
+#Randomized rules: BIRTH=[0, 1, 2, 7, 8], SURVIVE=[0, 6]
+#Randomized age rules: BIRTH_AGE=[1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], SURVIVE_AGE=[1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+
 
 BIRTH = {0,8} #0178 #346        #2378  #34
 SURVIVE = {3,4,6,7,8} #067 #13678 #34568 #135679
+BIRTH_AGE = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} # Age 0 does not exist - initialize with everything set to 1 (16 possible age values)
+SURVIVE_AGE = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15} # max age is 15
 BIRTH, SURVIVE = RULE_PRESETS[6]
 
 # Config menu state
@@ -82,6 +125,7 @@ config_grid_y = GRID_SIZE_Y
 config_cell_size = CELL_SIZE
 config_fps = 10  # Frames per second for simulation
 config_flicker_reduction = True  # Whether to enable dead pixel flickering reduction for Birth 0 rules
+config_age_influence = False  # Whether to enable age-based influence on birth/survive rules
 input_active = None  # Track which input field is active
 input_text = ""
 show_font_popup = False
@@ -276,18 +320,48 @@ def update_grid(grid):
     new_grid = np.copy(grid)
     for y in range(GRID_SIZE_Y):
         for x in range(GRID_SIZE_X):
-            # Count neighbors as cells with value >= 1, excluding the center cell
-            neighbors = np.count_nonzero(
-                grid[max(y-1, 0):min(y+2, GRID_SIZE_Y),
-                     max(x-1, 0):min(x+2, GRID_SIZE_X)] >= 1
-            )
             self = grid[y][x]
-            # if grid[y][x] >= 1:
-            #     neighbors -= 1  # Exclude the center cell if it's alive
-            if self > 0:
-                new_grid[y][x] = self + 1 if neighbors in SURVIVE else 0
+            
+            if config_age_influence:
+                # Age-based rule: count neighbors if their age is in BIRTH_AGE and SURVIVE_AGE
+                birth_neighbors = 0
+                survive_neighbors = 0
+                
+                for dy in range(-1, 2):
+                    for dx in range(-1, 2):
+                        # if dy == 0 and dx == 0:  # Skip center cell
+                        #     continue
+                        ny, nx = y + dy, x + dx
+                        if 0 <= ny < GRID_SIZE_Y and 0 <= nx < GRID_SIZE_X:
+                            neighbor_age = grid[ny][nx]
+                            if neighbor_age > 0:  # Alive neighbor
+                                # Check if neighbor age is in BIRTH_AGE set
+                                if neighbor_age in BIRTH_AGE:
+                                    birth_neighbors += 1
+                                # Check if neighbor age is in SURVIVE_AGE set
+                                if neighbor_age in SURVIVE_AGE:
+                                    survive_neighbors += 1
+                
+                if self > 0:
+                    # Cell is alive, check survival with age-filtered neighbors
+                    new_grid[y][x] = min(self + 1 if survive_neighbors in SURVIVE else 0, AGE_LIMIT)
+                else:
+                    # Cell is dead, check birth with age-filtered neighbors
+                    new_grid[y][x] = 1 if birth_neighbors in BIRTH else 0
             else:
-                new_grid[y][x] = 1 if neighbors in BIRTH else 0
+                # Default logic: Count neighbors as cells with value >= 1
+                neighbors = np.count_nonzero(
+                    grid[max(y-1, 0):min(y+2, GRID_SIZE_Y),
+                         max(x-1, 0):min(x+2, GRID_SIZE_X)] >= 1
+                )
+                # Exclude the center cell from neighbor count
+                # if self > 0:
+                #     neighbors -= 1
+                
+                if self > 0:
+                    new_grid[y][x] = self + 1 if neighbors in SURVIVE else 0
+                else:
+                    new_grid[y][x] = 1 if neighbors in BIRTH else 0
     return new_grid
 
 def initialize_grid_with_text(text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_size=12, font_name=None, bold=False):
@@ -322,8 +396,91 @@ def draw_rule_buttons(surface, rule_set, label, y_offset):
         buttons.append((rect, i))
     return buttons
 
-def handle_rule_click(mouse_pos, birth_buttons, survive_buttons):
-    global LAST_RULE, BIRTH, SURVIVE
+def draw_age_rule_buttons(surface, rule_set, label, x_offset, y_offset, vertical=False):
+    """Draw age rule buttons for values 1-15"""
+    label_surface = font.render(label, True, TEXT_COLOR)
+    
+    # Reduce age rule button size by 20%
+    age_button_width = int(RULE_BUTTON_WIDTH * 0.8)
+    age_button_height = int(RULE_BUTTON_HEIGHT * 0.8)
+    age_text_size = int(RULE_TEXT_SIZE * 0.8)
+    
+    if vertical:
+        # Vertical layout: two columns of buttons
+        surface.blit(label_surface, (x_offset, y_offset - 20))
+        buttons = []
+        # Create 16 buttons (1-16) in a 2-column layout for symmetry
+        for i in range(1, 17):
+            col = (i+1) % 2  # Column 0 or 1
+            row = (i-1) // 2  # Row number
+            
+            rect = pygame.Rect(x_offset + col * (age_button_width + RULE_MARGIN), 
+                             y_offset + row * (age_button_height + RULE_MARGIN),
+                             age_button_width, age_button_height)
+            
+            if i == 16:
+                # Age 0 is invalid - draw as disabled/empty box
+                color = (30, 30, 30)  # Dark gray for disabled
+                pygame.draw.rect(surface, BUTTON_ON, rect)
+                pygame.draw.rect(surface, TEXT_COLOR, rect, 1)  # Darker border
+
+                rule_font = pygame.font.SysFont(config_font_name, age_text_size)
+                # text = rule_font.render("X", True, (100, 100, 100))  # Gray X to show invalid
+                # text_rect = text.get_rect(center=rect.center)
+                # surface.blit(text, text_rect)
+                # Don't add to clickable buttons
+            else:
+                color = BUTTON_ON if i in rule_set else BUTTON_OFF
+                pygame.draw.rect(surface, color, rect)
+                pygame.draw.rect(surface, TEXT_COLOR, rect, 1)
+                
+                rule_font = pygame.font.SysFont(config_font_name, age_text_size)
+                text = rule_font.render(str(i), True, TEXT_COLOR)
+                text_rect = text.get_rect(center=rect.center)
+                surface.blit(text, text_rect)
+                buttons.append((rect, i))
+    else:
+        # Horizontal layout: spread across width (might need to wrap)
+        surface.blit(label_surface, (5, y_offset - 20))
+        buttons = []
+        
+        # Create 16 buttons (0-15) in horizontal rows for symmetry
+        buttons_per_row = min(16, (WINDOW_SIZE_X - 100) // (age_button_width + RULE_MARGIN))
+        
+        for i in range(1, 17):
+            col = i % buttons_per_row
+            row = i // buttons_per_row
+            
+            rect = pygame.Rect(50 + col * (age_button_width + RULE_MARGIN), 
+                             y_offset + row * (age_button_height + RULE_MARGIN),
+                             age_button_width, age_button_height)
+            
+            if i ==16:
+                # Age 0 is invalid - draw as disabled/empty box
+                color = (30, 30, 30)  # Dark gray for disabled
+                pygame.draw.rect(surface, color, rect)
+                pygame.draw.rect(surface, (60, 60, 60), rect, 1)  # Darker border
+                
+                rule_font = pygame.font.SysFont(config_font_name, age_text_size)
+                text = rule_font.render("X", True, (100, 100, 100))  # Gray X to show invalid
+                text_rect = text.get_rect(center=rect.center)
+                surface.blit(text, text_rect)
+                # Don't add to clickable buttons
+            else:
+                color = BUTTON_ON if i in rule_set else BUTTON_OFF
+                pygame.draw.rect(surface, color, rect)
+                pygame.draw.rect(surface, TEXT_COLOR, rect, 1)
+                
+                rule_font = pygame.font.SysFont(config_font_name, age_text_size)
+                text = rule_font.render(str(i), True, TEXT_COLOR)
+                text_rect = text.get_rect(center=rect.center)
+                surface.blit(text, text_rect)
+                buttons.append((rect, i))
+    
+    return buttons
+
+def handle_rule_click(mouse_pos, birth_buttons, survive_buttons, birth_age_buttons=None, survive_age_buttons=None):
+    global LAST_RULE, BIRTH, SURVIVE, BIRTH_AGE, SURVIVE_AGE
     
     if not can_click():
         return False
@@ -345,13 +502,62 @@ def handle_rule_click(mouse_pos, birth_buttons, survive_buttons):
                 SURVIVE.add(val)
             return True
     
+    # Check birth age buttons if provided
+    if birth_age_buttons:
+        for rect, val in birth_age_buttons:
+            if rect.collidepoint(mouse_pos):
+                if val in BIRTH_AGE:
+                    BIRTH_AGE.remove(val)
+                else:
+                    BIRTH_AGE.add(val)
+                return True
+    
+    # Check survive age buttons if provided
+    if survive_age_buttons:
+        for rect, val in survive_age_buttons:
+            if rect.collidepoint(mouse_pos):
+                if val in SURVIVE_AGE:
+                    SURVIVE_AGE.remove(val)
+                else:
+                    SURVIVE_AGE.add(val)
+                return True
+    
     return False
 
 def randomize_rules():
-    global BIRTH, SURVIVE
+    global BIRTH, SURVIVE, BIRTH_AGE, SURVIVE_AGE
     BIRTH = set(random.sample(range(9), random.randint(0, 5)))
     SURVIVE = set(random.sample(range(9), random.randint(0, 5)))
-    print(f"Randomized rules: BIRTH={sorted(BIRTH)}, SURVIVE={sorted(SURVIVE)}")
+    
+    # Also randomize age rules if age influence is enabled
+    if config_age_influence:
+        # Randomize age sets with ages 1-15 with high probability of keeping most ages
+        age_range = list(range(1, 16))  # Use full 1-15 range
+        
+        # High chance (80%) to keep almost all ages (remove only 0-3 random ages)
+        if random.random() < 0.8:
+            # Keep most ages, remove only 0-3 random ones
+            ages_to_remove = random.randint(0, 3)
+            BIRTH_AGE = set(age_range)
+            SURVIVE_AGE = set(age_range)
+            
+            if ages_to_remove > 0:
+                birth_remove = random.sample(age_range, min(ages_to_remove, len(age_range)))
+                survive_remove = random.sample(age_range, min(ages_to_remove, len(age_range)))
+                BIRTH_AGE -= set(birth_remove)
+                SURVIVE_AGE -= set(survive_remove)
+        else:
+            # Lower chance (20%) for more selective age rules (keep 5-10 ages)
+            birth_count = random.randint(5, 10)
+            survive_count = random.randint(5, 10)
+            BIRTH_AGE = set(random.sample(age_range, birth_count))
+            SURVIVE_AGE = set(random.sample(age_range, survive_count))
+        
+        print(f"Randomized rules: BIRTH={sorted(BIRTH)}, SURVIVE={sorted(SURVIVE)}")
+        print(f"Randomized age rules: BIRTH_AGE={sorted(BIRTH_AGE)}, SURVIVE_AGE={sorted(SURVIVE_AGE)}")
+    else:
+        print(f"Randomized rules: BIRTH={sorted(BIRTH)}, SURVIVE={sorted(SURVIVE)}")
+    
     #update COLOR_ARRAY to handle cases where BIRTH 0 is an active rule
     update_color_array(False)
 
@@ -359,7 +565,40 @@ def update_window_size():
     global screen, WINDOW_SIZE_X, WINDOW_SIZE_Y, RULE_Y_OFFSET
     WINDOW_SIZE_X = GRID_SIZE_X * CELL_SIZE
     RULE_Y_OFFSET = GRID_SIZE_Y * CELL_SIZE + 20
-    WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20
+    
+    # Calculate space needed for age rule buttons if age influence is enabled
+    if config_age_influence:
+        # Age rule buttons are 20% smaller
+        age_button_width = int(RULE_BUTTON_WIDTH * 0.8)
+        age_button_height = int(RULE_BUTTON_HEIGHT * 0.8)
+        
+        # Calculate horizontal layout requirements (16 buttons in a row)
+        horizontal_width_needed = 50 + 16 * (age_button_width + RULE_MARGIN) + 50
+        
+        # Calculate height for horizontal layout (2 rows of age buttons + existing rules)
+        horizontal_height_needed = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 40 + age_button_height * 2 + 60  # existing rules + age rules + margins
+        
+        # Get display height to check if window would fit on screen
+        try:
+            display_info = pygame.display.Info()
+            display_height = display_info.current_h
+        except:
+            display_height = 1080  # Fallback
+        
+        # Check if horizontal layout is feasible
+        horizontal_fits_width = WINDOW_SIZE_X >= horizontal_width_needed
+        horizontal_fits_height = horizontal_height_needed <= (display_height - 100)  # 100px margin for taskbar/decorations
+        
+        if horizontal_fits_width and horizontal_fits_height:
+            # Use horizontal layout at the bottom
+            WINDOW_SIZE_Y = horizontal_height_needed
+        else:
+            # Use vertical layout on the right side
+            min_width_for_vertical = GRID_SIZE_X * CELL_SIZE + 200  # Need space for 2 columns of buttons
+            WINDOW_SIZE_X = max(WINDOW_SIZE_X, min_width_for_vertical)
+            WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20
+    else:
+        WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20
     
     # Center the window on screen
     os.environ['SDL_VIDEO_CENTERED'] = '1'
@@ -372,6 +611,7 @@ def update_font():
 def draw_help_box(surface):
     # Calculate position to the right of the rule buttons
     help_x = 50 + 10 * (RULE_BUTTON_WIDTH + RULE_MARGIN) + 20  # Right of the last rule button + margin
+    
     help_y = RULE_Y_OFFSET
     help_height = RULE_BUTTON_HEIGHT * 2 + 10  # Same height as both rule sections
     help_width = max(100, help_height)
@@ -392,8 +632,8 @@ def draw_help_box(surface):
             "H - Reset to text",
             "R - Random rules",
             "0-9 - Rule presets",
-            # "Left click - Add cell",
-            # "Right click - Remove cell"
+            "",
+            "Age Rules: " + ("ON" if config_age_influence else "OFF"),
         ]
         
         # Render text lines
@@ -555,7 +795,7 @@ def draw_config_menu(surface):
     
     # Config menu background - responsive to screen size
     menu_width = min(500, int(WINDOW_SIZE_X * 0.8))  # 80% of screen width, max 500px
-    menu_height = min(500, int(WINDOW_SIZE_Y * 0.8))
+    menu_height = max(500, int(WINDOW_SIZE_Y * 0.7))
     menu_x = (WINDOW_SIZE_X - menu_width) // 2
     menu_y = (WINDOW_SIZE_Y - menu_height) // 2
     
@@ -575,6 +815,7 @@ def draw_config_menu(surface):
         ("Palette:", COLOR_PALETTES[config_palette]["name"], "palette"),
         ("Reverse Palette:", "Yes" if config_palette_reverse else "No", "palette_reverse"),
         ("Flicker Reduction:", "Yes" if config_flicker_reduction else "No", "flicker_reduction"),
+        ("Age Influence:", "Yes" if config_age_influence else "No", "age_influence"),
         ("Grid Width:", str(config_grid_x), "grid_x"),
         ("Grid Height:", str(config_grid_y), "grid_y"),
         ("Cell Size:", str(config_cell_size), "cell_size"),
@@ -667,6 +908,18 @@ def draw_config_menu(surface):
             surface.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
             
             buttons.append((input_rect, field_id))
+        elif field_id == "age_influence":
+            input_rect = pygame.Rect(menu_x + 120, y_pos - 5, input_width, 25)
+            
+            color = (255, 140, 0) if config_age_influence else (255, 180, 0)
+            pygame.draw.rect(surface, color, input_rect)
+            pygame.draw.rect(surface, TEXT_COLOR, input_rect, 1)
+            
+            display_text = "Yes" if config_age_influence else "No"
+            text_surface = font.render(display_text, True, TEXT_COLOR)
+            surface.blit(text_surface, (input_rect.x + 5, input_rect.y + 5))
+            
+            buttons.append((input_rect, field_id))
         else:
             # Regular input box
             input_rect = pygame.Rect(menu_x + 120, y_pos - 5, input_width, 25)
@@ -743,6 +996,7 @@ def handle_config_click(mouse_pos, buttons):
     global config_font_name, config_font_size, config_grid_x, config_grid_y, config_cell_size
     global GRID_SIZE_X, GRID_SIZE_Y, CELL_SIZE, grid
     global config_font_bold, config_text, config_palette, config_palette_reverse, config_fps, config_flicker_reduction
+    global config_age_influence, BIRTH_AGE, SURVIVE_AGE
     
     # Check click delay to prevent rapid clicking
     if not can_click():
@@ -817,6 +1071,10 @@ def handle_config_click(mouse_pos, buttons):
                 # Toggle flicker reduction setting
                 config_flicker_reduction = not config_flicker_reduction
                 return True
+            elif field_id == "age_influence":
+                # Toggle age influence setting
+                config_age_influence = not config_age_influence
+                return True
             else:
                 # Start editing this field
                 show_font_popup = False
@@ -869,6 +1127,7 @@ def handle_font_popup_click(mouse_pos, font_buttons, close_rect, scroll_up_rect,
 def handle_config_input(event):
     global input_active, input_text, show_font_popup
     global config_font_name, config_font_size, config_grid_x, config_grid_y, config_cell_size, config_text, config_fps
+    global BIRTH_AGE, SURVIVE_AGE
     
     if input_active is None:
         return False
@@ -915,8 +1174,16 @@ def handle_config_input(event):
 grid = initialize_grid_with_text(config_text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, 
                                 font_size=config_font_size, font_name=config_font_name, bold=config_font_bold)
 
+#TODO # Set initial window size
+update_window_size()
+
 # Main loop
 while True:
+    # Handle events that don't need button references first
+    mouse_pos = None
+    mouse_left_pressed = False
+    mouse_right_pressed = False
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -946,48 +1213,121 @@ while True:
                 randomize_rules()
             elif pygame.K_0 <= event.key <= pygame.K_9:
                 preset = event.key - pygame.K_0
-                if preset < len(RULE_PRESETS):
-                    BIRTH, SURVIVE = map(set, RULE_PRESETS[preset])
-                    update_color_array(False) # Update colors to handle BIRTH 0 rule is/was active
-
-
-        elif pygame.mouse.get_pressed()[0]:
-            mx, my = pygame.mouse.get_pos()
-            
-            if show_font_popup:
-                # Handle font popup clicks
-                font_buttons, close_rect, scroll_up_rect, scroll_down_rect = draw_font_popup(screen)
-                handle_font_popup_click((mx, my), font_buttons, close_rect, scroll_up_rect, scroll_down_rect)
-            elif show_config:
-                config_buttons = draw_config_menu(screen)
-                handle_config_click((mx, my), config_buttons)
-            else:
-                x, y = mx // CELL_SIZE, my // CELL_SIZE
-                if y < GRID_SIZE_Y:
-                    grid[y][x] = 1
+                if config_age_influence:
+                    # Handle age rules for presets
+                    if preset < len(AGE_RULE_PRESETS):
+                        BIRTH, SURVIVE, BIRTH_AGE, SURVIVE_AGE = AGE_RULE_PRESETS[preset]
+                        update_color_array(False)
                 else:
-                    handle_rule_click((mx, my), birth_buttons, survive_buttons)
-
-        elif pygame.mouse.get_pressed()[2]:
-            mx, my = pygame.mouse.get_pos()
-            x, y = mx // CELL_SIZE, my // CELL_SIZE
-            if y < GRID_SIZE_Y and not show_config and not show_font_popup:
-                grid[y][x] = 0
+                    if preset < len(RULE_PRESETS):
+                        BIRTH, SURVIVE = map(set, RULE_PRESETS[preset])
+                        # Reset age rules to full range when switching rule presets
+                        BIRTH_AGE = set(range(1, 16))  # Reset to 1-15
+                        SURVIVE_AGE = set(range(1, 16))  # Reset to 1-15
+                        update_color_array(False) # Update colors to handle BIRTH 0 rule is/was active
+    
+    # Check for mouse events
+    if pygame.mouse.get_pressed()[0]:
+        mouse_left_pressed = True
+        mouse_pos = pygame.mouse.get_pos()
+    elif pygame.mouse.get_pressed()[2]:
+        mouse_right_pressed = True
+        mouse_pos = pygame.mouse.get_pos()
 
     if running and not show_config and not show_font_popup:
         grid = update_grid(grid)
 
     draw_grid(screen, grid)
     
+    # Initialize button variables
+    birth_buttons = []
+    survive_buttons = []
+    birth_age_buttons = []
+    survive_age_buttons = []
+    
     if show_font_popup:
         # Draw font popup on top of everything
         font_buttons, close_rect, scroll_up_rect, scroll_down_rect = draw_font_popup(screen)
+        
+        # Handle font popup clicks
+        if mouse_left_pressed:
+            handle_font_popup_click(mouse_pos, font_buttons, close_rect, scroll_up_rect, scroll_down_rect)
+            
     elif show_config:
         config_buttons = draw_config_menu(screen)
+        
+        # Handle config menu clicks
+        if mouse_left_pressed:
+            handle_config_click(mouse_pos, config_buttons)
+            
     else:
         birth_buttons = draw_rule_buttons(screen, BIRTH, "BIRTH", RULE_Y_OFFSET)
         survive_buttons = draw_rule_buttons(screen, SURVIVE, "SURVIVE", RULE_Y_OFFSET + RULE_BUTTON_HEIGHT + 10)
+        
+        # Draw age rule buttons if age influence is enabled
+        if config_age_influence:
+            # Age rule buttons are 20% smaller
+            age_button_width = int(RULE_BUTTON_WIDTH * 0.8)
+            age_button_height = int(RULE_BUTTON_HEIGHT * 0.8)
+            
+            # Calculate horizontal layout requirements (same logic as window sizing)
+            horizontal_width_needed = 50 + 16 * (age_button_width + RULE_MARGIN) + 50
+            
+            # Calculate height for horizontal layout
+            horizontal_height_needed = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 40 + age_button_height * 2 + 60
+            
+            # Get display height to check if window would fit on screen
+            try:
+                display_info = pygame.display.Info()
+                display_height = display_info.current_h
+            except:
+                display_height = 1080  # Fallback
+            
+            # Check if horizontal layout is feasible
+            horizontal_fits_width = WINDOW_SIZE_X >= horizontal_width_needed
+            horizontal_fits_height = horizontal_height_needed <= (display_height - 100)
+            
+            if horizontal_fits_width and horizontal_fits_height:
+                # Horizontal layout at the bottom
+                age_y_start = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 40
+                birth_age_buttons = draw_age_rule_buttons(screen, BIRTH_AGE, "BIRTH AGE", 
+                                                        0, age_y_start, vertical=False)
+                survive_age_buttons = draw_age_rule_buttons(screen, SURVIVE_AGE, "SURVIVE AGE", 
+                                                          0, age_y_start + age_button_height + 30, vertical=False)
+            else:
+                # Vertical layout on the right side
+                age_x_offset = GRID_SIZE_X * CELL_SIZE + 20
+                birth_age_y_offset = 50
+                age_buttons_height = 8 * (age_button_height + RULE_MARGIN)
+                survive_age_y_offset = birth_age_y_offset + age_buttons_height + 40
+                
+                birth_age_buttons = draw_age_rule_buttons(screen, BIRTH_AGE, "BIRTH AGE", 
+                                                        age_x_offset, birth_age_y_offset, vertical=True)
+                survive_age_buttons = draw_age_rule_buttons(screen, SURVIVE_AGE, "SURVIVE AGE", 
+                                                          age_x_offset, survive_age_y_offset, vertical=True)
+        
         draw_help_box(screen)  # Draw help box to the right of rule buttons
+        
+        # Handle mouse clicks on game area and rule buttons
+        if mouse_left_pressed:
+            mx, my = mouse_pos
+            x, y = mx // CELL_SIZE, my // CELL_SIZE
+            # Only modify grid if click is within the actual grid bounds
+            if 0 <= x < GRID_SIZE_X and 0 <= y < GRID_SIZE_Y:
+                grid[y][x] = 1
+            else:
+                # Click is outside grid area, check for rule button clicks
+                if config_age_influence:
+                    handle_rule_click(mouse_pos, birth_buttons, survive_buttons, birth_age_buttons, survive_age_buttons)
+                else:
+                    handle_rule_click(mouse_pos, birth_buttons, survive_buttons)
+
+        elif mouse_right_pressed:
+            mx, my = mouse_pos
+            x, y = mx // CELL_SIZE, my // CELL_SIZE
+            # Only modify grid if click is within the actual grid bounds
+            if 0 <= x < GRID_SIZE_X and 0 <= y < GRID_SIZE_Y:
+                grid[y][x] = 0
     
     pygame.display.flip()
     clock.tick(config_fps)
