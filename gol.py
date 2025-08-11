@@ -53,49 +53,49 @@ BUTTON_OFF = (60, 60, 60)
 # Rule state
 
 RULE_PRESETS = [
-    (set([3]), set([2, 3])),          # 0: Conway's Life B3/S23
-    (set([0, 8]), set([3, 4, 6,7,8])),   # 1
-    (set([3, 6]), set([2, 3])),      # 2: HighLife B36/S23
-    (set([0, 7]), set([1,3,4])),   # 3
-    (set([0]), set([1, 3, 5,7])),# B0 S1357 
-    (set([1, 2, 5]), set([3, 5, 6])),# 5
-    (set([2, 4]), set([4, 5, 6])),   # 6
+    (set([3]), set([2, 3])),          # 0: Conway's Life
+    (set([0, 8]), set([2, 3, 5, 6, 7])),   # 1:
+    (set([3, 6]), set([2, 3])),      # 2: HighLife
+    (set([0, 7]), set([0, 2, 3])),   # 3:
+    (set([0]), set([0, 2, 4, 6])),# B0 S0246
+    (set([1, 2, 5]), set([2, 4, 5])),# 5:
+    (set([2, 4]), set([3, 4, 5])),   # 6:
     #(set([3, 6, 8]), set([2, 3, 4])),# 7
-    (set([0,5,6]), set([1,9])), 
-    (set([3, 4, 5]), set([2, 3, 4])),# 8
-    (set([1,2,4,8]), set([0,1,3,8])),# 9
+    (set([0,5,6]), set([0, 8])),
+    (set([1]), set([0,1,2,3,4,5,6,7,8])),# 8 fractal growth
+    (set([1,2,4,8]), set([0,2,7])),# 9:
 ]
 #B2467 S45678
 AGE_RULE_PRESETS = [
     # 0:
-    (set([3]), set([2, 3]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15])),
+    (set([3]), set([1, 2]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15])),
     
     # 1:
-    (set([0, 8]), set([3, 4, 6, 7, 8]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15])),
+    (set([0, 8]), set([2, 3, 5, 6, 7]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15])),
     
     # 2:
-    (set([3, 6]), set([2, 3]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15])),
+    (set([3, 6]), set([1, 2]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15])),
     
     # 3:
-    (set([0, 7]), set([1, 3, 4]), set([1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
+    (set([0, 7]), set([0, 2, 3]), set([1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
     
     # 4:
-    (set([0]), set([1, 3, 5, 7]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
+    (set([0]), set([0, 2, 4, 6]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15]), set([1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
     
     # 5:
-    (set([1, 2, 5]), set([3, 5, 6]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15])),
+    (set([1, 2, 5]), set([2, 4, 5]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15]), set([1, 2, 3, 4, 5, 7, 8, 9, 10, 12, 13, 14, 15])),
     
     # 6:
-    (set([2, 4]), set([4, 5, 6]), set([1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
+    (set([2, 4]), set([3, 4, 5]), set([1, 2, 3, 4, 5, 6, 8, 9, 11, 12, 13, 14, 15]), set([1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 15])),
     
     # 7:
-    (set([0, 5, 6]), set([1, 9]), set([1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
+    (set([0, 5, 6]), set([0, 8]), set([1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])),
     
     # 8: gameboy shrinking window
-    (set([0,1,2,3,7,8]), set([0,1,2,3,4,5,6]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])),
+    (set([0,1,2,3,7,8]), set([0,1,2,3,4,5]), set([1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]), set([1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])),
     
     # 9:Droplets preset
-    (set([1]), set([1,3,8]), set([1, 4, 6, 7, 8, 9, 11, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 11, 12, 14])),
+    (set([1]), set([0,2,7]), set([1, 4, 6, 7, 8, 9, 11, 13, 14, 15]), set([2, 3, 4, 5, 6, 7, 8, 11, 12, 14])),
 ]
 
 #Droplets
@@ -402,7 +402,7 @@ def update_grid(grid):
                 
                 if self > 0:
                     # Cell is alive, check survival with age-filtered neighbors
-                    new_grid[y][x] = min(self + 1 if survive_neighbors in SURVIVE else 0, AGE_LIMIT)
+                    new_grid[y][x] = min(self + 1 if (survive_neighbors - 1) in SURVIVE else 0, AGE_LIMIT)
                 else:
                     # Cell is dead, check birth with age-filtered neighbors
                     new_grid[y][x] = 1 if birth_neighbors in BIRTH else 0
@@ -417,9 +417,13 @@ def update_grid(grid):
                 #     neighbors -= 1
                 
                 if self > 0:
-                    new_grid[y][x] = self + 1 if neighbors in SURVIVE else 0
+                    new_grid[y][x] = self + 1 if (neighbors - 1) in SURVIVE else 0
+                    # if neighbors > 8:
+                        #print(f"survive {self} {neighbors}")
                 else:
                     new_grid[y][x] = 1 if neighbors in BIRTH else 0
+                    if neighbors > 8:
+                        print(f"birth {self} {neighbors}")
     return new_grid
 
 def initialize_grid_with_text(text, grid_size_x=GRID_SIZE_X, grid_size_y=GRID_SIZE_Y, font_size=12, font_name=None, bold=False):
@@ -439,7 +443,7 @@ def draw_rule_buttons(surface, rule_set, label, y_offset):
     label_surface = font.render(label, True, TEXT_COLOR)
     surface.blit(label_surface, (5, y_offset - 20))
     buttons = []
-    for i in range(10):
+    for i in range(9):
         rect = pygame.Rect(50 + i * (RULE_BUTTON_WIDTH + RULE_MARGIN), y_offset,
                            RULE_BUTTON_WIDTH, RULE_BUTTON_HEIGHT)
         color = BUTTON_ON if i in rule_set else BUTTON_OFF
@@ -575,9 +579,18 @@ def handle_rule_click(mouse_pos, birth_buttons, survive_buttons, birth_age_butto
         for rect, val in survive_age_buttons:
             if rect.collidepoint(mouse_pos):
                 if val in SURVIVE_AGE:
+                    # Deactivating: remove this value and all higher values
                     SURVIVE_AGE.remove(val)
+                    # Remove all values greater than val
+                    ages_to_remove = [age for age in SURVIVE_AGE if age > val]
+                    for age in ages_to_remove:
+                        SURVIVE_AGE.remove(age)
                 else:
+                    # Activating: add this value and all lower values
                     SURVIVE_AGE.add(val)
+                    # Add all values less than val (starting from 1, since age 0 doesn't exist)
+                    for age in range(1, val):
+                        SURVIVE_AGE.add(age)
                 return True
     
     return False
