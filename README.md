@@ -26,5 +26,3 @@ The actual hardware description resides in [this](https://github.com/heliosfa/he
 
 - **BIRTH** buttons control which neighbor counts cause dead cells to become alive
 - **SURVIVE** buttons control which neighbor counts allow living cells to stay alive
-  
-values include the cell itself  
