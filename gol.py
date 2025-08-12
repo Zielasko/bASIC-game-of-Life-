@@ -55,7 +55,7 @@ BUTTON_OFF = (60, 60, 60)
 RULE_PRESETS = [
     (set([3]), set([2, 3])),          # 0: Conway's Life
     (set([0, 8]), set([2, 3, 5, 6, 7])),   # 1:
-    (set([3, 6]), set([2, 3])),      # 2: HighLife
+    (set([3, 5,6,7,8]), set([5,6,7,8])),      # 2: B35678/S5678 Diamoeba
     (set([0, 7]), set([0, 2, 3])),   # 3:
     (set([0]), set([0, 2, 4, 6])),# B0 S0246
     (set([1, 2, 5]), set([2, 4, 5])),# 5:
@@ -112,11 +112,6 @@ BIRTH_AGE = set()
 SURVIVE_AGE = set() 
 BIRTH, SURVIVE = RULE_PRESETS[6]
 
-def update_age_sets():
-    """Update BIRTH_AGE and SURVIVE_AGE based on current AGE_LIMIT"""
-    global BIRTH_AGE, SURVIVE_AGE
-    BIRTH_AGE = set(range(1, AGE_LIMIT + 1))  # Age 0 does not exist
-    SURVIVE_AGE = set(range(1, AGE_LIMIT + 1))
 
 # Config menu state
 show_config = False
@@ -263,8 +258,6 @@ def update_color_array(log=True):
     
     # Update AGE_LIMIT based on age resolution
     AGE_LIMIT = (2 ** config_age_resolution) - 1
-    
-    update_age_sets()
     
     palette = COLOR_PALETTES[config_palette]
     
@@ -460,6 +453,7 @@ def draw_rule_buttons(surface, rule_set, label, y_offset):
 
 def draw_age_rule_buttons(surface, rule_set, label, x_offset, y_offset, vertical=False):
     """Draw age rule buttons for values 1-15"""
+    print(rule_set)
     label_surface = font.render(label, True, TEXT_COLOR)
     
     # Reduce age rule button size by 20%
@@ -472,19 +466,19 @@ def draw_age_rule_buttons(surface, rule_set, label, x_offset, y_offset, vertical
         surface.blit(label_surface, (x_offset, y_offset - 20))
         buttons = []
         # Create 16 buttons (1-16) in a 2-column layout for symmetry
-        for i in range(1, 17):
-            col = (i+1) % 2  # Column 0 or 1
-            row = (i-1) // 2  # Row number
+        column_number = -(-AGE_LIMIT // 8)
+        for i in range(1, AGE_LIMIT + 2):
+            col = (i-1) % column_number  # Column 0 or 1
+            row = (i-1) // column_number  # Row number
             
             rect = pygame.Rect(x_offset + col * (age_button_width + RULE_MARGIN), 
                              y_offset + row * (age_button_height + RULE_MARGIN),
                              age_button_width, age_button_height)
             
-            if i == 16:
-                # Age 0 is invalid - draw as disabled/empty box
-                color = (30, 30, 30)  # Dark gray for disabled
+            if i == AGE_LIMIT + 1:
+                # Age 0 is invalid
                 pygame.draw.rect(surface, BUTTON_ON, rect)
-                pygame.draw.rect(surface, TEXT_COLOR, rect, 1)  # Darker border
+                pygame.draw.rect(surface, TEXT_COLOR, rect, 1)
 
                 rule_font = pygame.font.SysFont(config_font_name, age_text_size)
                 # text = rule_font.render("X", True, (100, 100, 100))  # Gray X to show invalid
@@ -509,7 +503,7 @@ def draw_age_rule_buttons(surface, rule_set, label, x_offset, y_offset, vertical
         # Create 16 buttons (0-15) in horizontal rows for symmetry
         buttons_per_row = min(16, (WINDOW_SIZE_X - 100) // (age_button_width + RULE_MARGIN))
         
-        for i in range(1, 17):
+        for i in range(1, AGE_LIMIT + 2):
             col = i % buttons_per_row
             row = i // buttons_per_row
             
@@ -517,7 +511,7 @@ def draw_age_rule_buttons(surface, rule_set, label, x_offset, y_offset, vertical
                              y_offset + row * (age_button_height + RULE_MARGIN),
                              age_button_width, age_button_height)
             
-            if i ==16:
+            if i ==AGE_LIMIT + 1:
                 # Age 0 is invalid - draw as disabled/empty box
                 color = (30, 30, 30)  # Dark gray for disabled
                 pygame.draw.rect(surface, color, rect)
@@ -602,27 +596,28 @@ def randomize_rules():
     
     # Also randomize age rules if age influence is enabled
     if config_age_influence:
-        # Randomize age sets with ages 1-15 with high probability of keeping most ages
-        age_range = list(range(1, 16))  # Use full 1-15 range
+        # Randomize age sets with ages 1 to AGE_LIMIT
+        age_range = list(range(1, AGE_LIMIT + 1))  # Use dynamic AGE_LIMIT range
         
-        # High chance (80%) to keep almost all ages (remove only 0-3 random ages)
+        # For BIRTH_AGE: High chance (80%) to keep almost all ages (remove only 0-3 random ages)
         if random.random() < 0.8:
             # Keep most ages, remove only 0-3 random ones
             ages_to_remove = random.randint(0, 3)
             BIRTH_AGE = set(age_range)
-            SURVIVE_AGE = set(age_range)
             
             if ages_to_remove > 0:
                 birth_remove = random.sample(age_range, min(ages_to_remove, len(age_range)))
-                survive_remove = random.sample(age_range, min(ages_to_remove, len(age_range)))
                 BIRTH_AGE -= set(birth_remove)
-                SURVIVE_AGE -= set(survive_remove)
         else:
-            # Lower chance (20%) for more selective age rules (keep 5-10 ages)
-            birth_count = random.randint(5, 10)
-            survive_count = random.randint(5, 10)
+            # Lower chance (20%) for more selective age rules (keep 5-10 ages or proportional to AGE_LIMIT)
+            max_count = min(10, AGE_LIMIT)
+            birth_count = random.randint(5, max_count)
             BIRTH_AGE = set(random.sample(age_range, birth_count))
-            SURVIVE_AGE = set(random.sample(age_range, survive_count))
+        
+        # For SURVIVE_AGE: Use cascading behavior (contiguous range from 1 to a random cutoff)
+        # Pick a random cutoff point from 1 to AGE_LIMIT
+        cutoff_age = random.randint(1, AGE_LIMIT)
+        SURVIVE_AGE = set(range(1, cutoff_age + 1))
         
         print(f"Randomized rules: BIRTH={sorted(BIRTH)}, SURVIVE={sorted(SURVIVE)}")
         print(f"Randomized age rules: BIRTH_AGE={sorted(BIRTH_AGE)}, SURVIVE_AGE={sorted(SURVIVE_AGE)}")
@@ -642,6 +637,9 @@ def update_window_size():
         # Age rule buttons are 20% smaller
         age_button_width = int(RULE_BUTTON_WIDTH * 0.8)
         age_button_height = int(RULE_BUTTON_HEIGHT * 0.8)
+        
+        # Calculate number of columns needed for age buttons (8 buttons per column)
+        column_number = -(-AGE_LIMIT // 8)
         
         # Calculate horizontal layout requirements (16 buttons in a row)
         horizontal_width_needed = 50 + 16 * (age_button_width + RULE_MARGIN) + 50
@@ -665,7 +663,8 @@ def update_window_size():
             WINDOW_SIZE_Y = horizontal_height_needed
         else:
             # Use vertical layout on the right side
-            min_width_for_vertical = GRID_SIZE_X * CELL_SIZE + 200  # Need space for 2 columns of buttons
+            # Calculate width needed for the dynamic number of columns
+            min_width_for_vertical = GRID_SIZE_X * CELL_SIZE + 50 + column_number * (age_button_width + RULE_MARGIN) + 50
             WINDOW_SIZE_X = max(WINDOW_SIZE_X, min_width_for_vertical)
             WINDOW_SIZE_Y = RULE_Y_OFFSET + RULE_BUTTON_HEIGHT * 2 + 20
     else:
